@@ -2,7 +2,7 @@
  * particle_filter.cpp
  *
  * Created on: Dec 12, 2016
- * Author: Tiffany Huang
+ * Author: 48cfu
  */
 
 #include "particle_filter.h"
@@ -30,7 +30,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
    * NOTE: Consult particle_filter.h for more information about this method 
    *   (and others in this file).
    */
-  num_particles = 0;  // TODO: Set the number of particles
+  num_particles = 100;  // TODO: Set the number of particles
 
 }
 
