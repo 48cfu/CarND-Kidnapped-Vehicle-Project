@@ -23,40 +23,86 @@ using std::vector;
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
   /**
-   * TODO: Set the number of particles. Initialize all particles to 
+   * DONE: Set the number of particles. Initialize all particles to 
    *   first position (based on estimates of x, y, theta and their uncertainties
    *   from GPS) and all weights to 1. 
-   * TODO: Add random Gaussian noise to each particle.
+   * DONE: Add random Gaussian noise to each particle.
    * NOTE: Consult particle_filter.h for more information about this method 
    *   (and others in this file).
    */
-  num_particles = 100;  // TODO: Set the number of particles
+  if (!is_initialized) {
+    num_particles = 100;  // TODO: Set the number of particles
+    
+    std::default_random_engine gen;
+    // This line creates a normal (Gaussian) distribution for x,y,theta
+    std::normal_distribution<double> dist_x(x, std[0]);
+    std::normal_distribution<double> dist_y(y, std[1]);
+    std::normal_distribution<double> dist_theta(theta, std[2]);
 
+    for (int i = 0; i < num_particles; i++){
+      Particle p {};
+      p.id = i + 1;
+      p.x = dist_x(gen);
+      p.y = dist_y(gen); 
+      p.theta = dist_theta(gen);
+      p.weight = 1;
+      particles.push_back(p); //migliorare con emplace_back
+    }
+    std::vector<double> temporary_weights (num_particles, 1);
+    weights = std::move(temporary_weights);
+
+    is_initialized = true;
+  }
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], 
                                 double velocity, double yaw_rate) {
   /**
-   * TODO: Add measurements to each particle and add random Gaussian noise.
+   * DONE: Add measurements to each particle and add random Gaussian noise.
    * NOTE: When adding noise you may find std::normal_distribution 
    *   and std::default_random_engine useful.
    *  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
    *  http://www.cplusplus.com/reference/random/default_random_engine/
    */
-
+  std::default_random_engine gen;
+  // This line creates a normal (Gaussian) distribution for x,y,theta
+  std::normal_distribution<double> dist_x(0, std_pos[0]);
+  std::normal_distribution<double> dist_y(0, std_pos[1]);
+  std::normal_distribution<double> dist_theta(0, std_pos[2]);
+  for (size_t i = 0; i < particles.size(); i++){
+    double x0 = particles[i].x;
+    double y0 = particles[i].y;
+    double theta0 = particles[i].theta;
+    particles[i].x = x0 + (velocity/yaw_rate) * (sin(theta0 + yaw_rate * delta_t) - sin(theta0)) +  dist_x(gen);
+    particles[i].y = y0 + (velocity/yaw_rate) * (cos(theta0) - cos(theta0 + yaw_rate * delta_t)) +  dist_y(gen);
+    particles[i].theta = theta0 + yaw_rate * delta_t + dist_theta(gen);
+  }
 }
 
 void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted, 
                                      vector<LandmarkObs>& observations) {
   /**
-   * TODO: Find the predicted measurement that is closest to each 
+   * DONE: Find the predicted measurement that is closest to each 
    *   observed measurement and assign the observed measurement to this 
    *   particular landmark.
    * NOTE: this method will NOT be called by the grading code. But you will 
    *   probably find it useful to implement this method and use it as a helper 
    *   during the updateWeights phase.
    */
-
+  vector<LandmarkObs> new_observations{};
+  double distance = dist(observations[0].x, observations[0].y, predicted[0].x, predicted[0].y);
+  size_t minimum_index = 0;
+  //O(nm)
+  for (size_t i = 0; i < observations.size(); i++){
+    for (size_t j = 0; j < predicted.size(); j++){
+      double new_distance = dist(observations[i].x, observations[i].y, predicted[j].x, predicted[j].y);
+      if (new_distance <= distance){
+        minimum_index = j;
+      }
+    }
+    new_observations.push_back(observations[minimum_index]);
+  }
+  observations = new_observations;
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
