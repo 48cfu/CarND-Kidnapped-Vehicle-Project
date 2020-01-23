@@ -31,7 +31,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
    *   (and others in this file).
    */
   if (!is_initialized) {
-    num_particles = 100;  // TODO: Set the number of particles
+    num_particles = 100;  // DONE: Set the number of particles
     
     std::default_random_engine gen;
     // This line creates a normal (Gaussian) distribution for x,y,theta
@@ -83,7 +83,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
 void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted, 
                                      vector<LandmarkObs>& observations) {
   /**
-   * DONE: Find the predicted measurement that is closest to each 
+   * CHECK: Find the predicted measurement that is closest to each 
    *   observed measurement and assign the observed measurement to this 
    *   particular landmark.
    * NOTE: this method will NOT be called by the grading code. But you will 
@@ -93,6 +93,15 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
   if (!ParticleFilter::initialized()) throw std::runtime_error("dataAssociation called without initialization.");
   vector<LandmarkObs> new_observations{};
   
+  /* First need to transform the car's measurements from its local 
+  * car coordinate system to the map's coordinate system
+  * "observations" are in car coordinate system
+  */
+
+  /* Next, each measurement will need to be associated with a landmark identifier, 
+  * for this part we will take the closest landmark to each transformed observation
+  */
+
   //O(nm)
   for (size_t i = 0; i < observations.size(); i++){
     double distance = dist(observations[i].x, observations[i].y, predicted[0].x, predicted[0].y);
@@ -105,7 +114,7 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
       }
     }
     new_observations.push_back(predicted[minimum_index]);
-    observations[minimum_index]
+    observations[minimum_index];
   }
   observations = new_observations;
 }
@@ -127,6 +136,23 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
    *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
    */
   if (!ParticleFilter::initialized()) throw std::runtime_error("updateWeights called without initialization.");
+
+  // get predicted landmarks
+
+  
+  // Observations from car coordinate to map cordinate system (for each particle)
+  std::vector<LandmarkObs> observations_map_coordinates (observations.size(), LandmarkObs());
+  for (size_t i = 0; i < particles.size(); i++){
+    double theta = particles[i].theta;
+    for (size_t j = 0; j < observations.size(); j++){
+      observations_map_coordinates[j].id = observations[j].id;
+      observations_map_coordinates[j].x = particles[i].x + (cos(theta) * observations[j].x) - (sin(theta) * observations[j].y);
+      observations_map_coordinates[j].y = particles[i].y + (sin(theta) * observations[j].x) + (cos(theta) * observations[j].y);
+    }
+
+  }
+
+  //observations = std::move(observations_map_coordinates);
 }
 
 void ParticleFilter::resample() {
@@ -146,7 +172,7 @@ void ParticleFilter::resample() {
   }
   
   for (size_t i = 0; i < weights.size(); i++){
-    weights[i] = new_weights[i] / weights.size();
+    weights[i] = new_weights[i] / static_cast<double>(weights.size());
     particles[i].weight = weights[i];
   }
 }
