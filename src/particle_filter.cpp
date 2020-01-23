@@ -64,6 +64,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
    *  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
    *  http://www.cplusplus.com/reference/random/default_random_engine/
    */
+  if (!ParticleFilter::initialized()) throw std::runtime_error("Prediction called without initialization.");
   std::default_random_engine gen;
   // This line creates a normal (Gaussian) distribution for x,y,theta
   std::normal_distribution<double> dist_x(0, std_pos[0]);
@@ -89,18 +90,22 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
    *   probably find it useful to implement this method and use it as a helper 
    *   during the updateWeights phase.
    */
+  if (!ParticleFilter::initialized()) throw std::runtime_error("dataAssociation called without initialization.");
   vector<LandmarkObs> new_observations{};
-  double distance = dist(observations[0].x, observations[0].y, predicted[0].x, predicted[0].y);
-  size_t minimum_index = 0;
+  
   //O(nm)
   for (size_t i = 0; i < observations.size(); i++){
+    double distance = dist(observations[i].x, observations[i].y, predicted[0].x, predicted[0].y);
+    size_t minimum_index = 0;
     for (size_t j = 0; j < predicted.size(); j++){
       double new_distance = dist(observations[i].x, observations[i].y, predicted[j].x, predicted[j].y);
       if (new_distance <= distance){
+        distance = new_distance;
         minimum_index = j;
       }
     }
-    new_observations.push_back(observations[minimum_index]);
+    new_observations.push_back(predicted[minimum_index]);
+    observations[minimum_index]
   }
   observations = new_observations;
 }
@@ -121,17 +126,29 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
    *   and the following is a good resource for the actual equation to implement
    *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
    */
-
+  if (!ParticleFilter::initialized()) throw std::runtime_error("updateWeights called without initialization.");
 }
 
 void ParticleFilter::resample() {
   /**
-   * TODO: Resample particles with replacement with probability proportional 
+   * DONE: Resample particles with replacement with probability proportional 
    *   to their weight. 
    * NOTE: You may find std::discrete_distribution helpful here.
    *   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
    */
-
+  if (!ParticleFilter::initialized()) throw std::runtime_error("resample called without initialization.");
+  std::default_random_engine gen;
+  std::discrete_distribution samples(weights.begin(), weights.end());
+  std::vector<double> new_weights (weights.size(), 0);
+  for (size_t i = 0; i < weights.size(); i++){
+    size_t index = samples(gen);
+    new_weights[index]++;
+  }
+  
+  for (size_t i = 0; i < weights.size(); i++){
+    weights[i] = new_weights[i] / weights.size();
+    particles[i].weight = weights[i];
+  }
 }
 
 void ParticleFilter::SetAssociations(Particle& particle, 
