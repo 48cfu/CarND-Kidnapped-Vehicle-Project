@@ -1,5 +1,6 @@
 # Overview
 This repository contains all the code necessary to run the final project for the Localization course in Udacity's Self-Driving Car Nanodegree.
+
 ![](./data/kidnapped_short_new.gif)
 
 
