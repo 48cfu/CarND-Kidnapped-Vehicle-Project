@@ -60,19 +60,39 @@ struct LandmarkObs {
 inline double multiv_prob(double sig_x, double sig_y, double x_obs, double y_obs,
                    double mu_x, double mu_y) {
   // calculate normalization term
-  double gauss_norm;
-  gauss_norm = 1 / (2 * M_PI * sig_x * sig_y);
-
+  double gauss_norm = 1 / (2 * M_PI * sig_x * sig_y);
+  
   // calculate exponent
-  double exponent;
-  exponent = (pow(x_obs - mu_x, 2) / (2 * pow(sig_x, 2)))
+  double exponent = (pow(x_obs - mu_x, 2) / (2 * pow(sig_x, 2)))
                + (pow(y_obs - mu_y, 2) / (2 * pow(sig_y, 2)));
     
   // calculate weight using normalization terms and exponent
-  double weight;
-  weight = gauss_norm * exp(-exponent);
+  double weight = gauss_norm * exp(-exponent);
     
   return weight;
+}
+
+inline std::vector<double> normalize_vector(std::vector<double> inputVector) {
+
+  // declare sum 
+  double sum = 0.0f;
+
+  // declare and resize output vector
+  std::vector<double> outputVector;
+  outputVector.resize(inputVector.size());
+
+  // estimate the sum
+  for (size_t i = 0; i < inputVector.size(); ++i) {
+    sum += inputVector[i];
+  }
+
+  // normalize with sum
+  for (size_t i = 0; i < inputVector.size(); ++i) {
+    outputVector[i] = inputVector[i]/sum;
+  }
+
+  // return normalized vector:
+  return outputVector;
 }
 
 /**
