@@ -72,15 +72,15 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
     double x0 = particles[i].x;
     double y0 = particles[i].y;
     double theta0 = particles[i].theta;
+    double alpha = 0;
     if (yaw_rate == 0){ //avoid NaN
-      particles[i].x = x0 + velocity *delta_t * cos(theta0) + dist_x(gen);
-      particles[i].y = y0 + velocity *delta_t * sin(theta0) +  dist_y(gen);
-      particles[i].theta = theta0;
+      alpha = 0;
     } else {
-      particles[i].x = x0 + (velocity/yaw_rate) * (sin(theta0 + yaw_rate * delta_t) - sin(theta0)) +  dist_x(gen);
-      particles[i].y = y0 + (velocity/yaw_rate) * (cos(theta0) - cos(theta0 + yaw_rate * delta_t)) +  dist_y(gen);
-      particles[i].theta = theta0 + yaw_rate * delta_t + dist_theta(gen);
+      alpha = velocity / yaw_rate;
     }
+    particles[i].x = x0 + alpha * (sin(theta0 + yaw_rate * delta_t) - sin(theta0)) +  dist_x(gen);
+    particles[i].y = y0 + alpha * (cos(theta0) - cos(theta0 + yaw_rate * delta_t)) +  dist_y(gen);
+    particles[i].theta = theta0 + yaw_rate * delta_t + dist_theta(gen);
   }
 }
 
@@ -158,7 +158,6 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
   }
   
   for (size_t i = 0; i < particles.size(); i++){
-    double previous_weight = particles[i].weight;
      // Observations from car coordinate to map cordinate system (for each particle)
     std::vector<LandmarkObs> observations_map_coordinates{};
 
@@ -179,25 +178,20 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     vector<double> sense_y{};
     // Update particle weight
 
-    double new_weight = -1;
+    double new_weight = 1;
     for (size_t j = 0; j < observations_map_coordinates.size(); j++){
       int closest_landmark = observations_map_coordinates[j].id - 1; // landmarks ID start from 1
       double mu_x = predicted[closest_landmark].x;
       double mu_y = predicted[closest_landmark].y;
       if (dist(particles[i].x, particles[i].y, observations_map_coordinates[j].x, observations_map_coordinates[j].y) <= sensor_range){
-        if (new_weight < 0)
-          new_weight = 1;
         new_weight *= multiv_prob(std_landmark[0], std_landmark[1], observations_map_coordinates[j].x, observations_map_coordinates[j].y, mu_x, mu_y);
         associations.push_back(closest_landmark + 1);      
         sense_x.push_back(observations_map_coordinates[j].x);
         sense_y.push_back(observations_map_coordinates[j].y);
       }
     }
-    
-    if (new_weight > 0){
-      weights[i] = new_weight;
-      SetAssociations(particles[i], associations, sense_x, sense_y);
-    }
+    weights[i] = new_weight;
+    SetAssociations(particles[i], associations, sense_x, sense_y);
   }
   // normalize
   //weights = normalize_vector(weights);
@@ -216,9 +210,8 @@ void ParticleFilter::resample() {
   std::vector<Particle> new_particles;
   for (size_t i = 0; i < weights.size(); i++){
     size_t index = samples(gen);
-    //new_weights[index]++;
     new_particles.push_back(particles[index]);
-    weights[i] = particles[i].weight;
+    weights[i] = particles[index].weight;
   }
   particles = new_particles;
 }
