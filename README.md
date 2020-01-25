@@ -1,5 +1,7 @@
 # Overview
 This repository contains all the code necessary to run the final project for the Localization course in Udacity's Self-Driving Car Nanodegree.
+![](./data/kidnapped_short.gif)
+
 
 ## Project Introduction
 A robot has been kidnapped and transported to a new location! Luckily it has a map of this location, a (noisy) GPS estimate of its initial location, and lots of (noisy) sensor and control data.
