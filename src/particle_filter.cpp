@@ -74,13 +74,15 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
     double theta0 = particles[i].theta;
     double alpha = 0;
     if (yaw_rate == 0){ //avoid NaN
-      alpha = 0;
+      particles[i].x = x0 + velocity * delta_t *  cos(theta0) +  dist_x(gen);
+      particles[i].y = y0 + velocity * delta_t *  sin(theta0) +  dist_y(gen);
+      particles[i].theta = theta0 + dist_theta(gen);
     } else {
       alpha = velocity / yaw_rate;
+      particles[i].x = x0 + alpha * (sin(theta0 + yaw_rate * delta_t) - sin(theta0)) +  dist_x(gen);
+      particles[i].y = y0 + alpha * (cos(theta0) - cos(theta0 + yaw_rate * delta_t)) +  dist_y(gen);
+      particles[i].theta = theta0 + yaw_rate * delta_t + dist_theta(gen);
     }
-    particles[i].x = x0 + alpha * (sin(theta0 + yaw_rate * delta_t) - sin(theta0)) +  dist_x(gen);
-    particles[i].y = y0 + alpha * (cos(theta0) - cos(theta0 + yaw_rate * delta_t)) +  dist_y(gen);
-    particles[i].theta = theta0 + yaw_rate * delta_t + dist_theta(gen);
   }
 }
 
