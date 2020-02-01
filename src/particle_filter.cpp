@@ -73,7 +73,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
     double y0 = particles[i].y;
     double theta0 = particles[i].theta;
     double alpha = 0;
-    if (yaw_rate == 0){ //avoid NaN
+    if (std::abs(yaw_rate) <= 1e-5){ //avoid NaN
       particles[i].x = x0 + velocity * delta_t *  cos(theta0) +  dist_x(gen);
       particles[i].y = y0 + velocity * delta_t *  sin(theta0) +  dist_y(gen);
       particles[i].theta = theta0 + dist_theta(gen);
